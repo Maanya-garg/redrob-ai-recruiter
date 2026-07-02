@@ -1,0 +1,10 @@
+# Redrob Candidate Ranking Engine Requirements
+# Required for running the FastAPI web server API:
+fastapi>=0.100.0
+uvicorn>=0.20.0
+python-multipart>=0.0.6
+
+# Performance improvements and testing:
+rapidfuzz>=3.0.0
+pydantic>=2.0.0
+pytest>=7.0.0
