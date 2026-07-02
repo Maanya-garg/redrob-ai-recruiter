@@ -2,8 +2,8 @@
 Configuration settings for the Redrob AI Recruiter Ranking Engine.
 """
 
-# Overall weights for the final composite rank score
-# Technical score is prioritized (50%), followed by career prestige/fit, behavior, and risk.
+# Legacy fallback weights — overridden at runtime by ROLE_WEIGHTS in ranking_engine.py
+# based on jd.role_type (research / startup / leadership / platform / default)
 SCORING_WEIGHTS = {
     "technical": 0.50,
     "career": 0.25,
@@ -36,16 +36,17 @@ EDUCATION_TIER_MULTIPLIERS = {
     "unknown": 0.20,
 }
 
-# Company size prestige scores - flattened to prevent extreme brand name bias
+# Company size prestige — intentionally flattened to avoid over-rewarding brand names.
+# Domain alignment in career_score.py is the primary differentiator instead.
 COMPANY_SIZE_PRESTIGE_WEIGHTS = {
-    "10001+": 1.00,
-    "5001-10000": 0.95,
-    "1001-5000": 0.90,
-    "501-1000": 0.85,
-    "201-500": 0.80,
-    "51-200": 0.75,
+    "10001+": 0.90,
+    "5001-10000": 0.85,
+    "1001-5000": 0.80,
+    "501-1000": 0.78,
+    "201-500": 0.75,
+    "51-200": 0.72,
     "11-50": 0.70,
-    "1-10": 0.65,
+    "1-10": 0.68,
 }
 
 # Industry service tags to identify service-only backgrounds
@@ -63,48 +64,6 @@ MAX_NOTICE_PERIOD_DAYS = 90          # maximum notice period before severe risk 
 MIN_INTERVIEW_COMPLETION_RATE = 0.75 # below this is flagged as high ghosting risk
 MIN_OFFER_ACCEPTANCE_RATE = 0.50     # below this is flagged as offer renege risk
 
-# Keywords dictionary for feature extraction, expanded with details from candidate profiles
-FEATURE_KEYWORDS = {
-    "production_ml": [
-        "productionize", "production ml", "deploy", "mlops", "kubeflow", "mlflow", "tfx", 
-        "inference pipeline", "model serving", "triton", "sagemaker", "monitoring",
-        "latency", "throughput", "bentoml", "docker", "kubernetes", "k8s", "cicd",
-        "quantization", "onnx", "torchscript", "model compression"
-    ],
-    "retrieval_search": [
-        "elasticsearch", "solr", "lucene", "bm25", "retrieval", "hybrid search", "lexical search",
-        "meilisearch", "opensearch", "information retrieval", "inverted index", "ranking function",
-        "dense retrieval", "cross-encoder", "bi-encoder", "query understanding", "search quality"
-    ],
-    "recommendation_systems": [
-        "recommender", "recommendation", "collaborative filtering", "matrix factorization",
-        "recsys", "ctr prediction", "click-through rate", "personalization", "session-based recommendation",
-        "als", "two-tower", "candidate generation", "deep & wide", "factorization machines"
-    ],
-    "ranking_systems": [
-        "learning to rank", "ltr", "xgboost", "lightgbm", "catboost", "ranking model", "ndcg",
-        "mrr", "map@k", "pairwise ranking", "listwise ranking", "scoring function", "re-ranking", "ranker"
-    ],
-    "vector_databases": [
-        "milvus", "pinecone", "qdrant", "chromadb", "faiss", "weaviate", "vector search",
-        "similarity search", "nearest neighbor", "ann search", "vector db", "pgvector", "hnsw"
-    ],
-    "embeddings": [
-        "word2vec", "bert", "embeddings", "sentence embeddings", "dense retrieval", "vectorization",
-        "sentence-transformers", "dense vectors", "representation learning", "text embedding",
-        "roberta", "glove", "fasttext"
-    ],
-    "leadership": [
-        "team lead", "tech lead", "architect", "manager", "led a team", "managed a team",
-        "mentored", "coached", "director", "vp", "head of", "principal", "engineering lead"
-    ],
-    "product_indicators": [
-        "saas", "product-based", "b2b", "b2c", "scaling platform", "daily active users",
-        "monthly active users", "churn", "retention", "user growth", "a/b testing",
-        "metrics-driven", "product scaling", "microservices architecture"
-    ],
-    "open_source": [
-        "open-source", "open source", "contributed to", "contributor", "github project",
-        "maintained library", "public repository", "git pull request", "prs accepted"
-    ]
-}
+# NOTE: FEATURE_KEYWORDS has been moved to src/feature_extractor.py
+# to keep all evidence-based keyword logic co-located with the extractor.
+# Import from there if needed: from src.feature_extractor import FEATURE_KEYWORDS

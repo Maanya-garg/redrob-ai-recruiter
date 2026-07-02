@@ -114,6 +114,7 @@ export interface TechnicalScoreDetails extends SubScoreBreakdown {
 
 export interface CareerScoreDetails extends SubScoreBreakdown {
   experience_match: number;
+  domain_alignment?: number;
   stability_index: number;
   title_progression: number;
   prestige_rating: number;
@@ -152,6 +153,8 @@ export interface ScoredProfile {
   current_company: string;
   years_experience: number;
   final_score: number;
+  hiring_confidence?: number;
+  decision?: string;
   is_blocked: boolean;
   blocker_reasons: string[];
   sub_scores: SubScores;
@@ -161,6 +164,10 @@ export interface ScoredProfile {
     strengths: string[];
     weaknesses: string[];
     recommendation: string;
+    hiring_confidence?: number;
+    recruiter_reasoning?: string;
+    missing_requirements?: string[];
+    potential_risks?: string[];
   };
 }
 

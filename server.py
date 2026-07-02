@@ -221,9 +221,8 @@ def rank_candidates(req: RankRequest):
         print(repr(text_for_parse[:500]))
         print("====================================================================")
         jd = JDParser.parse_text(text_for_parse)
-        # Also persist it
-        with open(JD_PATH, "w", encoding="utf-8") as f:
-            f.write(text_for_parse)
+        # NOTE: We intentionally do NOT write text_for_parse to disk here.
+        # POST /api/upload-jd is the only authoritative writer to JD_PATH.
     else:
         text = ""
         if os.path.exists(JD_PATH):
@@ -289,7 +288,11 @@ def rank_candidates(req: RankRequest):
             scored["explanation"] = {
                 "strengths": explanation.strengths,
                 "weaknesses": explanation.weaknesses,
-                "recommendation": explanation.recommendation
+                "recommendation": explanation.recommendation,
+                "hiring_confidence": explanation.hiring_confidence,
+                "recruiter_reasoning": explanation.recruiter_reasoning,
+                "missing_requirements": explanation.missing_requirements,
+                "potential_risks": explanation.potential_risks,
             }
             
             if scored["is_blocked"]:
@@ -302,8 +305,11 @@ def rank_candidates(req: RankRequest):
             print(f"Error ranking candidate: {e}")
             continue
 
-    # Sort scored candidates: unblocked first, sorted descending by final score
-    scored_candidates.sort(key=lambda x: (not x["is_blocked"], x["final_score"]), reverse=True)
+    # Sort: best hiring_confidence first, then final_score as tiebreaker
+    scored_candidates.sort(
+        key=lambda x: (x.get("hiring_confidence", x["final_score"]), x["final_score"]),
+        reverse=True
+    )
 
     # Cache result sets for candidate profile detail fetches
     SCORED_CACHE = {c["candidate_id"]: c for c in scored_candidates}
@@ -338,6 +344,8 @@ def rank_candidates(req: RankRequest):
             "current_company": sc["current_company"],
             "years_experience": sc["years_experience"],
             "final_score": sc["final_score"],
+            "hiring_confidence": sc.get("hiring_confidence", sc["final_score"]),
+            "decision": sc.get("decision", "Hold"),
             "is_blocked": sc["is_blocked"],
             "blocker_reasons": sc["blocker_reasons"],
             "sub_scores": sc["sub_scores"],

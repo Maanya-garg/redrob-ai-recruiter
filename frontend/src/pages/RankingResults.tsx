@@ -40,16 +40,16 @@ export default function RankingResults({
       );
     }
 
-    // Recommendation / Blocked Filter
+    // Recommendation Filter
     if (recFilter !== "all") {
       list = list.filter((c) => {
-        if (recFilter === "blocked") return c.is_blocked;
-        if (c.is_blocked) return false; // Non-blocked for the others
-        const rec = c.explanation?.recommendation || "";
-        if (recFilter === "strong") return rec.includes("STRONG HIRE");
-        if (recFilter === "hire") return rec.includes("HIRE") && !rec.includes("STRONG");
-        if (recFilter === "consider") return rec.includes("CONSIDER");
-        if (recFilter === "reject") return rec.includes("REJECT");
+        const rec = (c as any).recommendation || c.explanation?.recommendation || "";
+        const recLower = rec.toLowerCase();
+        if (recFilter === "strong") return recLower.includes("strong hire");
+        if (recFilter === "interview") return recLower.includes("interview");
+        if (recFilter === "potential") return recLower.includes("potential");
+        if (recFilter === "hold") return recLower.includes("hold");
+        if (recFilter === "notrelevant") return recLower.includes("not relevant");
         return true;
       });
     }
@@ -74,12 +74,6 @@ export default function RankingResults({
         // Sub-scores
         valA = a.sub_scores[sortBy]?.score || 0;
         valB = b.sub_scores[sortBy]?.score || 0;
-      }
-
-      // Always push blocked to bottom of sorting if sorting descending by final score
-      if (sortBy === "final_score" && sortOrder === "desc") {
-        if (a.is_blocked && !b.is_blocked) return 1;
-        if (!a.is_blocked && a.is_blocked) return -1;
       }
 
       if (valA < valB) return sortOrder === "asc" ? -1 : 1;
@@ -118,10 +112,8 @@ export default function RankingResults({
       ];
       
       const rows = filteredCandidates.map((c, idx) => {
-        const rec = c.is_blocked 
-          ? "BLOCKED" 
-          : (c.explanation?.recommendation.split(":")[0] || "N/A");
-        const blocker = c.blocker_reasons.join(" | ");
+        const rec = (c as any).recommendation || c.explanation?.recommendation || "Not Relevant";
+        const blocker = "";
         return [
           idx + 1, c.candidate_id, c.name, c.headline, c.current_role, c.current_company,
           c.years_experience, c.final_score, c.sub_scores.technical.score, c.sub_scores.career.score,
@@ -147,8 +139,7 @@ export default function RankingResults({
     }
   };
 
-  const getBadgeClass = (score: number, isBlocked: boolean) => {
-    if (isBlocked) return "bg-red-950/40 text-red-400 border border-red-500/30";
+  const getBadgeClass = (score: number) => {
     if (score >= 80.0) return "bg-green-950/40 text-green-400 border border-green-500/30";
     if (score >= 65.0) return "bg-blue-950/40 text-blue-400 border border-blue-500/30";
     if (score >= 50.0) return "bg-yellow-950/40 text-yellow-400 border border-yellow-500/30";
@@ -156,38 +147,40 @@ export default function RankingResults({
   };
 
   const getRecommendationBadge = (scored: ScoredProfile) => {
-    if (scored.is_blocked) {
-      return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-950/50 text-red-400 border border-red-500/20">
-          <XOctagon className="w-3 h-3" /> Blocker
-        </span>
-      );
-    }
-    const rec = scored.explanation?.recommendation || "";
-    if (rec.includes("STRONG HIRE")) {
+    const rec = (scored as any).recommendation || scored.explanation?.recommendation || "";
+    const recLower = rec.toLowerCase();
+
+    if (recLower.includes("strong hire")) {
       return (
         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-950/50 text-green-400 border border-green-500/20">
           <CheckCircle className="w-3 h-3" /> Strong Hire
         </span>
       );
     }
-    if (rec.includes("HIRE")) {
+    if (recLower.includes("interview")) {
       return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-950/50 text-indigo-400 border border-indigo-500/20">
-          <CheckCircle className="w-3 h-3" /> Hire
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-950/50 text-blue-400 border border-blue-500/20">
+          <CheckCircle className="w-3 h-3" /> Interview
         </span>
       );
     }
-    if (rec.includes("CONSIDER")) {
+    if (recLower.includes("potential")) {
       return (
         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-yellow-950/50 text-yellow-400 border border-yellow-500/20">
-          <AlertTriangle className="w-3 h-3" /> Consider
+          <AlertTriangle className="w-3 h-3" /> Potential Hire
+        </span>
+      );
+    }
+    if (recLower.includes("hold")) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-950/50 text-orange-400 border border-orange-500/20">
+          <AlertTriangle className="w-3 h-3" /> Hold
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-950/50 text-red-400 border border-red-500/20">
-        <XOctagon className="w-3 h-3" /> Reject
+      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-900 text-slate-300 border border-slate-700">
+        <XOctagon className="w-3 h-3" /> Not Relevant
       </span>
     );
   };
@@ -232,11 +225,11 @@ export default function RankingResults({
             className="flex-1 p-2 bg-black/30 border border-white/5 focus:border-indigo-500/40 rounded-lg text-xs font-semibold focus:outline-none text-slate-300"
           >
             <option value="all">All Recommendations</option>
-            <option value="strong">Strong Hire</option>
-            <option value="hire">Hire</option>
-            <option value="consider">Consider</option>
-            <option value="reject">Reject</option>
-            <option value="blocked">Blocked Candidates</option>
+            <option value="strong">⭐ Strong Hire</option>
+            <option value="interview">✅ Interview</option>
+            <option value="potential">🟡 Potential Hire</option>
+            <option value="hold">🟠 Hold</option>
+            <option value="notrelevant">⚪ Not Relevant</option>
           </select>
         </div>
 
@@ -303,8 +296,8 @@ export default function RankingResults({
                       </div>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className={`px-2.5 py-1 rounded-lg font-bold text-xs ${getBadgeClass(c.final_score, c.is_blocked)}`}>
-                        {c.is_blocked ? "Blocked" : c.final_score.toFixed(1)}
+                      <span className={`px-2.5 py-1 rounded-lg font-bold text-xs ${getBadgeClass(c.final_score)}`}>
+                        {c.final_score.toFixed(1)}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center text-slate-300">
