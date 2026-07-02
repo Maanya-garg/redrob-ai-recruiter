@@ -2,7 +2,7 @@
 import { RankResponse, ScoredProfile, JobRequirements } from "./types";
 
 const API_BASE =
-  import.meta.env.VITE_API_URL || "http://localhost:8000";
+  (import.meta as any).env?.VITE_API_URL || "http://localhost:8000";
 export async function checkBackendHealth(): Promise<boolean> {
   try {
     const res = await fetch(`${API_BASE}/api/health`);
