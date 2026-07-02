@@ -1,8 +1,11 @@
+
 import { RankResponse, ScoredProfile, JobRequirements } from "./types";
 
+const API_BASE =
+  import.meta.env.VITE_API_URL || "http://localhost:8000";
 export async function checkBackendHealth(): Promise<boolean> {
   try {
-    const res = await fetch("/api/health");
+    const res = await fetch("${API_BASE}/api/health");
     if (!res.ok) return false;
     const data = await res.json();
     return data.status === "ok";
@@ -12,7 +15,7 @@ export async function checkBackendHealth(): Promise<boolean> {
 }
 
 export async function getCurrentJD(): Promise<{ markdown: string; requirements: JobRequirements }> {
-  const res = await fetch("/api/jd");
+  const res = await fetch("${API_BASE}/api/jd");
   if (!res.ok) {
     throw new Error("Failed to fetch current Job Description");
   }
@@ -23,7 +26,7 @@ export async function uploadJDFile(file: File): Promise<{ status: string; messag
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await fetch("/api/upload-jd", {
+  const res = await fetch("${API_BASE}/api/upload-jd", {
     method: "POST",
     body: formData,
   });
@@ -39,7 +42,7 @@ export async function uploadCandidatesFile(file: File): Promise<{ status: string
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await fetch("/api/upload-candidates", {
+  const res = await fetch("${API_BASE}/api/upload-candidates", {
     method: "POST",
     body: formData,
   });
@@ -56,7 +59,7 @@ export async function runRanking(
   useSample: boolean = true,
   candidateLimit: number = 500
 ): Promise<RankResponse> {
-  const res = await fetch("/api/rank", {
+  const res = await fetch("${API_BASE}/api/rank", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -76,7 +79,7 @@ export async function runRanking(
 }
 
 export async function getCandidateDetails(candidateId: string): Promise<ScoredProfile> {
-  const res = await fetch(`/api/candidates/${candidateId}`);
+  const res = await fetch(`${API_BASE}/api/candidates/${candidateId}`);
   if (!res.ok) {
     const err = await res.json();
     throw new Error(err.detail || `Failed to fetch details for candidate ${candidateId}`);
